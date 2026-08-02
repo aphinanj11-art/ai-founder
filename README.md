@@ -38,7 +38,10 @@ MVP-A validates the deterministic core gameplay loop without Generative AI. MVP-
 
 - [Game Vision Document v0.1](docs/product/GAME_VISION.md)
 - [Game Design Constitution v0.1](docs/product/GAME_DESIGN_CONSTITUTION.md)
+- [Core Gameplay Loop v0.1](docs/design/CORE_GAMEPLAY_LOOP.md)
 - [Decision Log](docs/governance/DECISION_LOG.md)
+
+The Core Gameplay Loop is an approved hypothesis awaiting MVP-A prototype and playtest validation.
 
 The Game Design Constitution is the approved decision framework for design, scope, AI boundaries, and governance.
 
