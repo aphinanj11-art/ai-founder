@@ -20,3 +20,31 @@ __pycache__/
 # Environment files
 .env
 .env.*
+# Unity project: unity/AIFounder
+unity/AIFounder/[Ll]ibrary/
+unity/AIFounder/[Tt]emp/
+unity/AIFounder/[Oo]bj/
+unity/AIFounder/[Bb]uild/
+unity/AIFounder/[Bb]uilds/
+unity/AIFounder/[Ll]ogs/
+unity/AIFounder/[Uu]ser[Ss]ettings/
+unity/AIFounder/[Mm]emoryCaptures/
+unity/AIFounder/[Rr]ecordings/
+
+unity/AIFounder/*.csproj
+unity/AIFounder/*.sln
+unity/AIFounder/*.slnx
+unity/AIFounder/*.suo
+unity/AIFounder/*.user
+unity/AIFounder/*.userprefs
+unity/AIFounder/*.pidb
+unity/AIFounder/*.booproj
+unity/AIFounder/*.svd
+unity/AIFounder/*.pdb
+unity/AIFounder/*.mdb
+unity/AIFounder/*.opendb
+unity/AIFounder/*.VC.db
+unity/AIFounder/.vsconfig
+
+unity/AIFounder/.vs/
+unity/AIFounder/.idea/

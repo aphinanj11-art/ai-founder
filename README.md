@@ -4,7 +4,7 @@
 
 AI Founder: From Zero to Autonomous Empire is a single-player simulation game concept about starting with almost nothing in a near-future industrial city and gradually building a life, workshop, business, factory, and AI-supported industrial organization through practical decisions, systems thinking, and automation.
 
-The project is currently in pre-production as a documentation-first portfolio repository. No game engine or implementation stack has been selected.
+The project is currently in pre-production as a documentation-first portfolio repository. Unity 6.3 LTS / 6000.3.21f1 is the approved MVP-A engine baseline. The Unity project is located at `unity/AIFounder`.
 
 ## Player Promise
 
@@ -28,10 +28,13 @@ MVP-A validates the deterministic core gameplay loop without Generative AI. MVP-
 
 ## Current Status
 
-- Phase: Pre-production
+- Phase: Pre-production / MVP-A scaffold
 - Game Vision v0.1: Approved
-- Core Gameplay Loop design: Not started
-- Engine: Not selected
+- Core Gameplay Loop v0.1: Approved Loop Hypothesis
+- MVP-A Prototype Plan v0.1: Approved
+- Engine baseline: Unity 6.3 LTS / 6000.3.21f1
+- Unity project: `unity/AIFounder`
+- Scaffold status: Unity MVP-A project scaffold established
 - Gameplay implementation: Not authorized
 
 ## Documentation

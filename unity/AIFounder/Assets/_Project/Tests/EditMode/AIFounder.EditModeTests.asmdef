@@ -1,0 +1,30 @@
+{
+    "name":  "AIFounder.EditModeTests",
+    "rootNamespace":  "AIFounder.Tests.EditMode",
+    "references":  [
+                       "AIFounder.Domain",
+                       "AIFounder.Application"
+                   ],
+    "includePlatforms":  [
+                             "Editor"
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "versionDefines":  [
+
+                       ],
+    "optionalUnityReferences":  [
+                                    "TestAssemblies"
+                                ],
+    "noEngineReferences":  false
+}

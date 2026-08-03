@@ -1,0 +1,26 @@
+{
+    "name":  "AIFounder.Application",
+    "rootNamespace":  "AIFounder.Application",
+    "references":  [
+                       "AIFounder.Domain"
+                   ],
+    "includePlatforms":  [
+
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "versionDefines":  [
+
+                       ],
+    "noEngineReferences":  true
+}

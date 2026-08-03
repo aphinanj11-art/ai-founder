@@ -1,0 +1,31 @@
+{
+    "name":  "AIFounder.PlayModeTests",
+    "rootNamespace":  "AIFounder.Tests.PlayMode",
+    "references":  [
+                       "AIFounder.Presentation",
+                       "AIFounder.Application",
+                       "AIFounder.Domain"
+                   ],
+    "includePlatforms":  [
+
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "versionDefines":  [
+
+                       ],
+    "optionalUnityReferences":  [
+                                    "TestAssemblies"
+                                ],
+    "noEngineReferences":  false
+}

@@ -1,0 +1,27 @@
+{
+    "name":  "AIFounder.Presentation",
+    "rootNamespace":  "AIFounder.Presentation",
+    "references":  [
+                       "AIFounder.Domain",
+                       "AIFounder.Application"
+                   ],
+    "includePlatforms":  [
+
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "versionDefines":  [
+
+                       ],
+    "noEngineReferences":  false
+}
