@@ -3,7 +3,8 @@
     "rootNamespace":  "AIFounder.Presentation",
     "references":  [
                        "AIFounder.Domain",
-                       "AIFounder.Application"
+                       "AIFounder.Application",
+                       "Unity.InputSystem"
                    ],
     "includePlatforms":  [
 

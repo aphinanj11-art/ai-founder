@@ -3,7 +3,8 @@
     "rootNamespace":  "AIFounder.Tests.EditMode",
     "references":  [
                        "AIFounder.Domain",
-                       "AIFounder.Application"
+                       "AIFounder.Application",
+                       "AIFounder.Presentation"
                    ],
     "includePlatforms":  [
                              "Editor"
