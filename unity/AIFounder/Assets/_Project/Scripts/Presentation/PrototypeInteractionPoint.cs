@@ -7,6 +7,7 @@ namespace AIFounder.Presentation
     {
         [SerializeField] private string promptLabel = "Interaction Point";
         [SerializeField] private string interactionVerb = "Use";
+        [SerializeField] private string statusLabel = string.Empty;
         [SerializeField] private bool isAvailable = true;
         [SerializeField] private Renderer feedbackRenderer;
         [SerializeField] private Color idleColor = Color.gray;
@@ -14,9 +15,12 @@ namespace AIFounder.Presentation
 
         public string PromptLabel => promptLabel;
         public string InteractionVerb => interactionVerb;
+        public string InteractionStatusMessage => $"{StatusSubject} interaction detected";
         public bool IsAvailable => isAvailable;
         public int InteractionCount { get; private set; }
         public string LastInteractionMessage { get; private set; } = string.Empty;
+
+        private string StatusSubject => string.IsNullOrWhiteSpace(statusLabel) ? promptLabel : statusLabel;
 
         private void Awake()
         {
@@ -29,6 +33,11 @@ namespace AIFounder.Presentation
             interactionVerb = verb;
         }
 
+        public void ConfigureStatusLabel(string label)
+        {
+            statusLabel = label;
+        }
+
         public void Interact()
         {
             if (!isAvailable)
@@ -37,7 +46,7 @@ namespace AIFounder.Presentation
             }
 
             InteractionCount++;
-            LastInteractionMessage = $"Interacted with {promptLabel}";
+            LastInteractionMessage = InteractionStatusMessage;
             ApplyColor(interactedColor);
             Debug.Log(LastInteractionMessage, this);
         }

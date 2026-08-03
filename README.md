@@ -36,6 +36,7 @@ MVP-A validates the deterministic core gameplay loop without Generative AI. MVP-
 - Unity project: `unity/AIFounder`
 - Scaffold status: Unity MVP-A project scaffold established
 - Step 1.1 First Playable Foundation: Isometric movement, follow camera, interaction prompt, and three graybox interaction points
+- Step 1.1 validation hardening: deterministic interaction tie-breaker, visible status feedback, and expanded PlayMode coverage
 - Gameplay implementation: Foundation shell only; jobs, economy, AI, save/load, and progression remain unauthorized
 
 ## Documentation
