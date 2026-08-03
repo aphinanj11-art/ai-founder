@@ -4,6 +4,7 @@ using AIFounder.Presentation;
 using AIFounder.Presentation.Repair;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -29,6 +30,60 @@ namespace AIFounder.Tests.PlayMode
 
             Assert.IsTrue(controller.IsOpen);
             Assert.That(controller.VisibleBodyText, Does.Contain("Repair Damaged Workshop Pump"));
+        }
+
+        [UnityTest]
+        public IEnumerator SceneContainsInputSystemEventPipelineForRepairPanel()
+        {
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+            yield return null;
+
+            EventSystem[] eventSystems = Object.FindObjectsByType<EventSystem>(FindObjectsSortMode.None);
+            Canvas repairCanvas = FindCanvas("Repair Job Panel Canvas");
+
+            Assert.AreEqual(1, eventSystems.Length);
+            Assert.IsNotNull(eventSystems[0].currentInputModule);
+            Assert.AreEqual("UnityEngine.InputSystem.UI.InputSystemUIInputModule", eventSystems[0].currentInputModule.GetType().FullName);
+            Assert.IsNotNull(repairCanvas);
+            Assert.IsNotNull(repairCanvas.GetComponent<GraphicRaycaster>());
+        }
+
+        [UnityTest]
+        public IEnumerator SceneRepairPanelButtonsReceivePointerClicks()
+        {
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+            var controller = Object.FindFirstObjectByType<RepairJobPanelController>();
+            var workshop = FindInteractionPoint("Workshop");
+
+            workshop.Interact();
+            Assert.IsTrue(controller.IsOpen);
+            ClickSceneButton("Close Button");
+            Assert.IsFalse(controller.IsOpen);
+            Assert.AreEqual(500, controller.Session.CashLedger.Cash);
+            Assert.AreEqual(RepairJobStatus.Available, controller.Session.CurrentJob.Status);
+
+            workshop.Interact();
+            ClickSceneButton("Accept Button");
+            Assert.AreEqual(RepairJobStatus.Accepted, controller.Session.CurrentJob.Status);
+
+            ClickSceneButton("Quick Patch Button");
+            Assert.AreEqual("Quick Patch", controller.Session.CurrentJob.SelectedMethod.DisplayName);
+
+            ClickSceneButton("Confirm Repair Button");
+            Assert.AreEqual(RepairJobStatus.Repaired, controller.Session.CurrentJob.Status);
+            Assert.AreEqual(420, controller.Session.CashLedger.Cash);
+
+            ClickSceneButton("Deliver Button");
+            Assert.AreEqual(RepairJobStatus.Delivered, controller.Session.CurrentJob.Status);
+            Assert.AreEqual(720, controller.Session.CashLedger.Cash);
+
+            ClickSceneButton("Purchase Upgrade Button");
+            Assert.IsTrue(controller.Session.UpgradeState.IsPurchased);
+            Assert.AreEqual(600, controller.Session.CashLedger.Cash);
+
+            ClickSceneButton("Accept Next Job Button");
+            Assert.AreEqual("Repair Overheated Electric Motor", controller.Session.CurrentJob.Definition.Title);
+            Assert.AreEqual(RepairJobStatus.Accepted, controller.Session.CurrentJob.Status);
         }
 
         [UnityTest]
@@ -145,6 +200,15 @@ namespace AIFounder.Tests.PlayMode
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator RepairMethodButtonsReceivePointerClicksWhenValid()
+        {
+            AssertMethodButtonPointerClick("Quick Patch Button", "Quick Patch");
+            AssertMethodButtonPointerClick("Standard Repair Button", "Standard Repair");
+            AssertMethodButtonPointerClick("Reliable Replacement Button", "Reliable Replacement");
+            yield return null;
+        }
+
         private static PrototypeInteractionPoint FindInteractionPoint(string label)
         {
             foreach (PrototypeInteractionPoint point in Object.FindObjectsByType<PrototypeInteractionPoint>(FindObjectsSortMode.None))
@@ -152,6 +216,68 @@ namespace AIFounder.Tests.PlayMode
                 if (point.PromptLabel == label)
                 {
                     return point;
+                }
+            }
+
+            return null;
+        }
+
+        private static Canvas FindCanvas(string canvasName)
+        {
+            foreach (Canvas canvas in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            {
+                if (canvas.name == canvasName)
+                {
+                    return canvas;
+                }
+            }
+
+            return null;
+        }
+
+        private static void ClickSceneButton(string buttonName)
+        {
+            Button button = FindButton(buttonName);
+            Assert.IsNotNull(button, $"Expected button '{buttonName}' to exist.");
+            Assert.IsTrue(button.interactable, $"Expected button '{buttonName}' to be interactable before clicking.");
+            ExecuteEvents.Execute(button.gameObject, new PointerEventData(EventSystem.current), ExecuteEvents.pointerClickHandler);
+        }
+
+        private static Button FindButton(string buttonName)
+        {
+            foreach (Button button in Object.FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (button.name == buttonName)
+                {
+                    return button;
+                }
+            }
+
+            return null;
+        }
+
+        private static void AssertMethodButtonPointerClick(string buttonName, string expectedMethodName)
+        {
+            var fixture = CreateFixture();
+            fixture.Controller.OpenPanel();
+            fixture.Controller.AcceptCurrentJob();
+
+            Button button = FindFixtureButton(fixture.Root, buttonName);
+            Assert.IsNotNull(button);
+            Assert.IsTrue(button.interactable);
+            ExecuteEvents.Execute(button.gameObject, new PointerEventData(null), ExecuteEvents.pointerClickHandler);
+
+            Assert.AreEqual(expectedMethodName, fixture.Controller.Session.CurrentJob.SelectedMethod.DisplayName);
+            DestroyFixture(fixture);
+        }
+
+        private static Button FindFixtureButton(GameObject root, string buttonName)
+        {
+            foreach (Button button in root.GetComponentsInChildren<Button>(true))
+            {
+                if (button.name == buttonName)
+                {
+                    return button;
                 }
             }
 
@@ -190,15 +316,15 @@ namespace AIFounder.Tests.PlayMode
             var bodyText = CreateText(root.transform, "body");
             var cashText = CreateText(root.transform, "cash");
             var feedbackText = CreateText(root.transform, "feedback");
-            var acceptButton = CreateButton(root.transform, "accept");
-            var closeButton = CreateButton(root.transform, "close");
-            var quickButton = CreateButton(root.transform, "quick");
-            var standardButton = CreateButton(root.transform, "standard");
-            var reliableButton = CreateButton(root.transform, "reliable");
-            var confirmButton = CreateButton(root.transform, "confirm");
-            var deliverButton = CreateButton(root.transform, "deliver");
-            var upgradeButton = CreateButton(root.transform, "upgrade");
-            var nextButton = CreateButton(root.transform, "next");
+            var acceptButton = CreateButton(root.transform, "Accept Button");
+            var closeButton = CreateButton(root.transform, "Close Button");
+            var quickButton = CreateButton(root.transform, "Quick Patch Button");
+            var standardButton = CreateButton(root.transform, "Standard Repair Button");
+            var reliableButton = CreateButton(root.transform, "Reliable Replacement Button");
+            var confirmButton = CreateButton(root.transform, "Confirm Repair Button");
+            var deliverButton = CreateButton(root.transform, "Deliver Button");
+            var upgradeButton = CreateButton(root.transform, "Purchase Upgrade Button");
+            var nextButton = CreateButton(root.transform, "Accept Next Job Button");
 
             SetPrivateField(controller, "panelRoot", panelRoot);
             SetPrivateField(controller, "titleText", titleText);
