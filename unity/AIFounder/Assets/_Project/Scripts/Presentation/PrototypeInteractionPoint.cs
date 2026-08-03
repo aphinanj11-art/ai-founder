@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace AIFounder.Presentation
 {
@@ -12,6 +13,7 @@ namespace AIFounder.Presentation
         [SerializeField] private Renderer feedbackRenderer;
         [SerializeField] private Color idleColor = Color.gray;
         [SerializeField] private Color interactedColor = Color.green;
+        [SerializeField] private UnityEvent onInteracted;
 
         public string PromptLabel => promptLabel;
         public string InteractionVerb => interactionVerb;
@@ -49,6 +51,7 @@ namespace AIFounder.Presentation
             LastInteractionMessage = InteractionStatusMessage;
             ApplyColor(interactedColor);
             Debug.Log(LastInteractionMessage, this);
+            onInteracted?.Invoke();
         }
 
         private void ApplyColor(Color color)

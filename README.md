@@ -28,7 +28,7 @@ MVP-A validates the deterministic core gameplay loop without Generative AI. MVP-
 
 ## Current Status
 
-- Phase: Pre-production / MVP-A scaffold
+- Phase: Pre-production / MVP-A first playable
 - Game Vision v0.1: Approved
 - Core Gameplay Loop v0.1: Approved Loop Hypothesis
 - MVP-A Prototype Plan v0.1: Approved
@@ -37,7 +37,9 @@ MVP-A validates the deterministic core gameplay loop without Generative AI. MVP-
 - Scaffold status: Unity MVP-A project scaffold established
 - Step 1.1 First Playable Foundation: Isometric movement, follow camera, interaction prompt, and three graybox interaction points
 - Step 1.1 validation hardening: deterministic interaction tie-breaker, visible status feedback, and expanded PlayMode coverage
-- Gameplay implementation: Foundation shell only; jobs, economy, AI, save/load, and progression remain unauthorized
+- Step 1.2 Repair Job Vertical Slice: one Repair Job can be accepted, resolved, delivered, reviewed, and followed by a next-job decision
+- Step 1.2 economy/progression: minimal cash ledger and one Better Repair Tool upgrade
+- Gameplay implementation: Step 1.2 repair slice only; production, quality inspection, energy/day, inventory, save/load, AI, employees, and factory automation remain unauthorized
 
 ## Documentation
 

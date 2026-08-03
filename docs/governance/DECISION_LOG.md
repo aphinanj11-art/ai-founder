@@ -5,7 +5,7 @@
 **Project:** AI Founder: From Zero to Autonomous Empire  
 **Product Owner:** Bee  
 **Current Phase:** Pre-production — Documentation-first repository setup  
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-03
 
 ## Status Legend
 
@@ -112,3 +112,12 @@
 | DEC-090 | 2026-08-03 | Approved | Expanded Step 1.1 validation coverage approved and implemented | Covers prompt visibility, range changes, unavailable targets, active-candidate invocation, player movement, equal-distance selection, and required scene interaction points. | Adds tests for the existing foundation shell only and does not authorize Step 1.2 gameplay systems. | Bee |
 | DEC-091 | 2026-08-03 | Approved | Visible prototype interaction status approved | Gives players an in-game confirmation when Workshop, Shop, or Delivery interactions are detected without adding gameplay effects or a notification framework. | Adds minimal uGUI status text to the existing HUD only. | Bee |
 | DEC-092 | 2026-08-03 | Approved | Step 1.1 remains limited to movement, camera, interaction, and graybox shell | Reconfirms that the hardening follow-up does not expand into jobs, economy, AI, inventory, progression, or production gameplay. | Maintains the Step 1.1 boundary and keeps Step 1.2 decisions separate. | Bee |
+| DEC-093 | 2026-08-03 | Approved | Step 1.2 Repair Job Vertical Slice authorized and implemented | Establishes the first deterministic job slice needed to test accepting, resolving, delivering, reviewing, and continuing toward another job. | Scope is limited to one Repair Job vertical slice connected to the existing Workshop and Delivery Point interactions. | Bee |
+| DEC-094 | 2026-08-03 | Approved | Deterministic Repair Job state flow approved | Keeps the first job implementation explainable, repeatable, and testable before broader systems are introduced. | Repair Job state may cover available, accepted, method selected, repaired, delivered, outcome reviewed, and rejected states only. | Bee |
+| DEC-095 | 2026-08-03 | Approved | Minimal cash ledger approved for Step 1.2 | Allows the Repair Job slice to show visible economic cause and effect without introducing the full MVP-A economy. | Cash changes are limited to repair method cost, delivery reward, profit explanation, and one upgrade purchase. | Bee |
+| DEC-096 | 2026-08-03 | Approved | Repair methods and trade-off direction approved | Gives the player a meaningful work decision instead of passive waiting. | The Repair Job slice may include Quick Patch, Standard Repair, and Reliable Replacement as deterministic method choices. | Bee |
+| DEC-097 | 2026-08-03 | Approved | One upgrade approved for validation of visible progression | Tests whether a small reinvestment creates an understandable improvement after a job outcome. | Step 1.2 may include only the Better Repair Tool upgrade, affecting the next Repair Job method costs. | Bee |
+| DEC-098 | 2026-08-03 | Approved | Next-job decision point implemented | Supports the approved one-more-job signal by presenting a follow-up Repair Job after delivery and review. | Step 1.2 may expose one next Repair Job decision point but must not implement a full job board or multiple archetypes. | Bee |
+| DEC-099 | 2026-08-03 | Approved | Production and Quality Inspection remain excluded from Step 1.2 | Keeps this slice focused on proving Repair Job flow before adding other job archetypes. | Small Production and Quality Inspection require separate future authorization before implementation. | Bee |
+| DEC-100 | 2026-08-03 | Approved | Energy, Reputation, Inventory, Save, Instrumentation, and AI remain excluded from Step 1.2 | Prevents the first gameplay slice from becoming a broad MVP-A systems implementation. | Step 1.2 must not add energy/day systems, reputation, inventory, save/load, JSONL instrumentation, Generative AI, Ollama, employees, or factory automation. | Bee |
+| DEC-101 | 2026-08-03 | Approved | Step 1.2 commit and push authorized only after validation passes | Keeps repository publication tied to successful import, compilation, and test validation. | One local commit and push may be performed only for the approved Step 1.2 files if validation passes. | Bee |
