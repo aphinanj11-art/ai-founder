@@ -49,6 +49,88 @@ namespace AIFounder.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator RepairPanelLayoutUsesScrollableContentAndFixedActionBar()
+        {
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+
+            ScrollRect[] scrollRects = Object.FindObjectsByType<ScrollRect>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            GameObject contentRoot = FindGameObject("Content Root");
+            GameObject actionBar = FindGameObject("Fixed Action Bar");
+
+            Assert.AreEqual(1, scrollRects.Length);
+            Assert.IsNotNull(contentRoot);
+            Assert.IsNotNull(contentRoot.GetComponent<VerticalLayoutGroup>());
+            Assert.IsNotNull(contentRoot.GetComponent<ContentSizeFitter>());
+            Assert.IsNotNull(actionBar);
+            Assert.IsNotNull(actionBar.GetComponent<VerticalLayoutGroup>());
+            Assert.IsFalse(actionBar.transform.IsChildOf(contentRoot.transform));
+        }
+
+        [UnityTest]
+        public IEnumerator RepairPanelStateVisibilityShowsOnlyRelevantSectionsAndControls()
+        {
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+            var workshop = FindInteractionPoint("Workshop");
+            workshop.Interact();
+
+            AssertSectionVisible("Job Information Section", true);
+            AssertSectionVisible("Outcome Section", false);
+            AssertButtonVisible("Accept Button", true, true);
+            AssertButtonVisible("Close Button", true, true);
+            AssertButtonVisible("Deliver Button", false, false);
+            AssertButtonVisible("Purchase Upgrade Button", false, false);
+            AssertButtonVisible("Accept Next Job Button", false, false);
+
+            ClickSceneButton("Accept Button");
+            AssertSectionVisible("Repair Methods Section", true);
+            AssertButtonVisible("Quick Patch Button", true, true);
+            AssertButtonVisible("Standard Repair Button", true, true);
+            AssertButtonVisible("Reliable Replacement Button", true, true);
+            AssertButtonVisible("Confirm Repair Button", false, false);
+
+            ClickSceneButton("Standard Repair Button");
+            AssertSectionVisible("Selected Method Section", true);
+            AssertButtonVisible("Confirm Repair Button", true, true);
+
+            ClickSceneButton("Confirm Repair Button");
+            AssertSectionVisible("Delivery Section", true);
+            AssertSectionVisible("Outcome Section", false);
+            AssertButtonVisible("Quick Patch Button", false, false);
+            AssertButtonVisible("Standard Repair Button", false, false);
+            AssertButtonVisible("Reliable Replacement Button", false, false);
+            AssertButtonVisible("Deliver Button", true, true);
+
+            ClickSceneButton("Deliver Button");
+            AssertSectionVisible("Outcome Section", true);
+            AssertSectionVisible("Upgrade Section", true);
+            AssertSectionVisible("Next Job Section", true);
+            AssertButtonVisible("Purchase Upgrade Button", true, true);
+            AssertButtonVisible("Accept Next Job Button", true, true);
+            AssertButtonVisible("Confirm Repair Button", false, false);
+        }
+
+        [UnityTest]
+        public IEnumerator ActiveRepairPanelButtonsStayInsidePanelBoundsAtFullHd()
+        {
+            Screen.SetResolution(1920, 1080, false);
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+            yield return null;
+
+            var workshop = FindInteractionPoint("Workshop");
+            workshop.Interact();
+            AssertActiveButtonsInsidePanel();
+
+            ClickSceneButton("Accept Button");
+            AssertActiveButtonsInsidePanel();
+            ClickSceneButton("Reliable Replacement Button");
+            AssertActiveButtonsInsidePanel();
+            ClickSceneButton("Confirm Repair Button");
+            AssertActiveButtonsInsidePanel();
+            ClickSceneButton("Deliver Button");
+            AssertActiveButtonsInsidePanel();
+        }
+
+        [UnityTest]
         public IEnumerator SceneRepairPanelButtonsReceivePointerClicks()
         {
             yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
@@ -235,12 +317,76 @@ namespace AIFounder.Tests.PlayMode
             return null;
         }
 
+        private static GameObject FindGameObject(string objectName)
+        {
+            foreach (Transform transform in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (transform.name == objectName)
+                {
+                    return transform.gameObject;
+                }
+            }
+
+            return null;
+        }
+
+        private static void AssertSectionVisible(string sectionName, bool expectedVisible)
+        {
+            GameObject section = FindGameObject(sectionName);
+            Assert.IsNotNull(section, $"Expected section '{sectionName}' to exist.");
+            Assert.AreEqual(expectedVisible, section.activeInHierarchy, $"Unexpected visibility for section '{sectionName}'.");
+        }
+
+        private static void AssertButtonVisible(string buttonName, bool expectedVisible, bool expectedInteractable)
+        {
+            Button button = FindButton(buttonName);
+            Assert.IsNotNull(button, $"Expected button '{buttonName}' to exist.");
+            Assert.AreEqual(expectedVisible, button.gameObject.activeInHierarchy, $"Unexpected visibility for button '{buttonName}'.");
+            if (expectedVisible)
+            {
+                Assert.AreEqual(expectedInteractable, button.interactable, $"Unexpected interactable state for button '{buttonName}'.");
+            }
+        }
+
         private static void ClickSceneButton(string buttonName)
         {
             Button button = FindButton(buttonName);
             Assert.IsNotNull(button, $"Expected button '{buttonName}' to exist.");
+            Assert.IsTrue(button.gameObject.activeInHierarchy, $"Expected button '{buttonName}' to be visible before clicking.");
             Assert.IsTrue(button.interactable, $"Expected button '{buttonName}' to be interactable before clicking.");
             ExecuteEvents.Execute(button.gameObject, new PointerEventData(EventSystem.current), ExecuteEvents.pointerClickHandler);
+        }
+
+        private static void AssertActiveButtonsInsidePanel()
+        {
+            RectTransform panel = FindGameObject("Repair Job Panel Root").GetComponent<RectTransform>();
+            var panelCorners = new Vector3[4];
+            panel.GetWorldCorners(panelCorners);
+            Rect panelRect = RectFromCorners(panelCorners);
+
+            foreach (Button button in Object.FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (!button.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                var buttonCorners = new Vector3[4];
+                button.GetComponent<RectTransform>().GetWorldCorners(buttonCorners);
+                foreach (Vector3 corner in buttonCorners)
+                {
+                    Assert.IsTrue(panelRect.Contains(corner), $"Button '{button.name}' is outside the Repair Job panel bounds.");
+                }
+            }
+        }
+
+        private static Rect RectFromCorners(Vector3[] corners)
+        {
+            float minX = Mathf.Min(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
+            float maxX = Mathf.Max(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
+            float minY = Mathf.Min(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
+            float maxY = Mathf.Max(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
+            return Rect.MinMaxRect(minX, minY, maxX, maxY);
         }
 
         private static Button FindButton(string buttonName)
