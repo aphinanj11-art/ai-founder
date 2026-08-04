@@ -20,9 +20,21 @@ namespace AIFounder.Presentation
             HideStatus();
         }
 
+        public void SetSuppressed(bool suppressed)
+        {
+            IsSuppressed = suppressed;
+            if (IsSuppressed)
+            {
+                Hide();
+                HideStatus();
+            }
+        }
+
+        public bool IsSuppressed { get; private set; }
+
         public void Show(IPrototypeInteractable interactable)
         {
-            if (promptText == null || interactable == null || !interactable.IsAvailable)
+            if (IsSuppressed || promptText == null || interactable == null || !interactable.IsAvailable)
             {
                 Hide();
                 return;
@@ -45,7 +57,7 @@ namespace AIFounder.Presentation
 
         public void ShowStatus(string message)
         {
-            if (statusText == null || string.IsNullOrWhiteSpace(message))
+            if (IsSuppressed || statusText == null || string.IsNullOrWhiteSpace(message))
             {
                 HideStatus();
                 return;

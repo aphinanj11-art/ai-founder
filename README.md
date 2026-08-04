@@ -39,6 +39,7 @@ MVP-A validates the deterministic core gameplay loop without Generative AI. MVP-
 - Step 1.1 validation hardening: deterministic interaction tie-breaker, visible status feedback, and expanded PlayMode coverage
 - Step 1.2 Repair Job Vertical Slice: one Repair Job can be accepted, resolved, delivered, reviewed, and followed by a next-job decision
 - Step 1.2 economy/progression: minimal cash ledger and one Better Repair Tool upgrade
+- Step 1.2B clarity refinement: prototype objective guidance, loop progress, location labels, and Repair Job UI readability improvements
 - Gameplay implementation: Step 1.2 repair slice only; production, quality inspection, energy/day, inventory, save/load, AI, employees, and factory automation remain unauthorized
 
 ## Documentation

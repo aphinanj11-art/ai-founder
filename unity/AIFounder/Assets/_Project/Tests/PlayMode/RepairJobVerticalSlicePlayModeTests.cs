@@ -67,6 +67,82 @@ namespace AIFounder.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator ObjectiveHudAndProgressReflectRepairLoopStates()
+        {
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+            var workshop = FindInteractionPoint("Workshop");
+
+            AssertObjective("Go to the Workshop");
+            AssertProgress("[Job]");
+
+            workshop.Interact();
+            AssertObjective("Review the repair job");
+            AssertProgress("[Job]");
+
+            ClickSceneButton("Accept Button");
+            AssertObjective("Select a repair method");
+            AssertProgress("[Repair]");
+
+            ClickSceneButton("Standard Repair Button");
+            AssertObjective("Confirm the repair");
+            AssertProgress("[Repair]");
+
+            ClickSceneButton("Confirm Repair Button");
+            AssertObjective("Deliver the repaired pump");
+            AssertProgress("[Delivery]");
+
+            ClickSceneButton("Deliver Button");
+            AssertObjective("Purchase the tool upgrade or continue");
+            AssertProgress("[Upgrade]");
+
+            ClickSceneButton("Purchase Upgrade Button");
+            AssertObjective("Review the next job");
+            AssertProgress("[Next Job]");
+        }
+
+        [UnityTest]
+        public IEnumerator InteractionPromptIsSuppressedWhileRepairPanelIsOpenAndReturnsAfterClose()
+        {
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+            var promptHud = Object.FindFirstObjectByType<InteractionPromptHud>();
+            var workshop = FindInteractionPoint("Workshop");
+
+            promptHud.Show(workshop);
+            Assert.IsTrue(promptHud.IsVisible);
+
+            workshop.Interact();
+            Assert.IsFalse(promptHud.IsVisible);
+            Assert.IsTrue(promptHud.IsSuppressed);
+
+            ClickSceneButton("Close Button");
+            promptHud.Show(workshop);
+            Assert.IsFalse(promptHud.IsSuppressed);
+            Assert.IsTrue(promptHud.IsVisible);
+            Assert.That(promptHud.VisibleText, Does.Contain("Workshop"));
+        }
+
+        [UnityTest]
+        public IEnumerator SceneLocationsHaveReadableLabelsAndDistinctColors()
+        {
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+
+            PrototypeInteractionPoint workshop = FindInteractionPoint("Workshop");
+            PrototypeInteractionPoint shop = FindInteractionPoint("Nearby Shop");
+            PrototypeInteractionPoint delivery = FindInteractionPoint("Delivery Point");
+
+            AssertLocationLabel(workshop, "Workshop");
+            AssertLocationLabel(shop, "Nearby Shop");
+            AssertLocationLabel(delivery, "Delivery Point");
+
+            Color workshopColor = workshop.GetComponent<PrototypeLocationVisual>().MarkerColor;
+            Color shopColor = shop.GetComponent<PrototypeLocationVisual>().MarkerColor;
+            Color deliveryColor = delivery.GetComponent<PrototypeLocationVisual>().MarkerColor;
+            Assert.AreNotEqual(workshopColor, shopColor);
+            Assert.AreNotEqual(workshopColor, deliveryColor);
+            Assert.AreNotEqual(shopColor, deliveryColor);
+        }
+
+        [UnityTest]
         public IEnumerator RepairPanelStateVisibilityShowsOnlyRelevantSectionsAndControls()
         {
             yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
@@ -110,6 +186,51 @@ namespace AIFounder.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator MethodSelectionAndDisabledControlsHaveDistinctVisualStates()
+        {
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+            var workshop = FindInteractionPoint("Workshop");
+            workshop.Interact();
+            ClickSceneButton("Accept Button");
+
+            Button standardButton = FindButton("Standard Repair Button");
+            Color unselectedColor = standardButton.GetComponent<Image>().color;
+
+            ClickSceneButton("Standard Repair Button");
+            Color selectedColor = standardButton.GetComponent<Image>().color;
+            Assert.AreNotEqual(unselectedColor, selectedColor);
+            Assert.That(FindGameObject("Repair Methods Section Text").GetComponent<Text>().text, Does.Contain("> Standard Repair"));
+
+            ClickSceneButton("Confirm Repair Button");
+            ClickSceneButton("Deliver Button");
+            ClickSceneButton("Purchase Upgrade Button");
+
+            Button upgradeButton = FindButton("Purchase Upgrade Button");
+            Assert.IsTrue(upgradeButton.gameObject.activeInHierarchy);
+            Assert.IsFalse(upgradeButton.interactable);
+            Assert.Less(upgradeButton.GetComponent<Image>().color.a, selectedColor.a);
+        }
+
+        [UnityTest]
+        public IEnumerator OutcomeBreakdownUsesCompactFinancialLabels()
+        {
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+            var workshop = FindInteractionPoint("Workshop");
+            workshop.Interact();
+            ClickSceneButton("Accept Button");
+            ClickSceneButton("Quick Patch Button");
+            ClickSceneButton("Confirm Repair Button");
+            ClickSceneButton("Deliver Button");
+
+            string outcome = FindGameObject("Outcome Section Text").GetComponent<Text>().text;
+            Assert.That(outcome, Does.Contain("Revenue: 300"));
+            Assert.That(outcome, Does.Contain("Repair Cost: 80"));
+            Assert.That(outcome, Does.Contain("Profit: 220"));
+            Assert.That(outcome, Does.Contain("Cash Before: 500"));
+            Assert.That(outcome, Does.Contain("Cash After: 720"));
+        }
+
+        [UnityTest]
         public IEnumerator ActiveRepairPanelButtonsStayInsidePanelBoundsAtFullHd()
         {
             Screen.SetResolution(1920, 1080, false);
@@ -128,6 +249,43 @@ namespace AIFounder.Tests.PlayMode
             AssertActiveButtonsInsidePanel();
             ClickSceneButton("Deliver Button");
             AssertActiveButtonsInsidePanel();
+        }
+
+        [UnityTest]
+        public IEnumerator ScrollContentDoesNotOverlapFixedActionBarAtFullHd()
+        {
+            Screen.SetResolution(1920, 1080, false);
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+            yield return null;
+
+            var workshop = FindInteractionPoint("Workshop");
+            workshop.Interact();
+
+            AssertScrollContentDoesNotOverlapActionBar();
+        }
+
+        [UnityTest]
+        public IEnumerator RequiredRepairPanelUiFitsAtSixteenHundredByNineHundred()
+        {
+            Screen.SetResolution(1600, 900, false);
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+            yield return null;
+
+            var workshop = FindInteractionPoint("Workshop");
+            workshop.Interact();
+            AssertActiveButtonsInsidePanel();
+            AssertScrollContentDoesNotOverlapActionBar();
+
+            ClickSceneButton("Accept Button");
+            AssertActiveButtonsInsidePanel();
+            AssertScrollContentDoesNotOverlapActionBar();
+            ClickSceneButton("Reliable Replacement Button");
+            AssertActiveButtonsInsidePanel();
+            ClickSceneButton("Confirm Repair Button");
+            AssertActiveButtonsInsidePanel();
+            ClickSceneButton("Deliver Button");
+            AssertActiveButtonsInsidePanel();
+            AssertScrollContentDoesNotOverlapActionBar();
         }
 
         [UnityTest]
@@ -337,6 +495,26 @@ namespace AIFounder.Tests.PlayMode
             Assert.AreEqual(expectedVisible, section.activeInHierarchy, $"Unexpected visibility for section '{sectionName}'.");
         }
 
+        private static void AssertObjective(string expectedText)
+        {
+            Text objective = FindGameObject("Objective Text").GetComponent<Text>();
+            Assert.That(objective.text, Does.Contain(expectedText));
+        }
+
+        private static void AssertProgress(string expectedStep)
+        {
+            Text progress = FindGameObject("Loop Progress Text").GetComponent<Text>();
+            Assert.That(progress.text, Does.Contain(expectedStep));
+        }
+
+        private static void AssertLocationLabel(PrototypeInteractionPoint point, string expectedLabel)
+        {
+            Assert.IsNotNull(point, $"Expected interaction point '{expectedLabel}' to exist.");
+            Transform label = point.transform.Find("Location Label");
+            Assert.IsNotNull(label, $"Expected '{expectedLabel}' to have a Location Label child.");
+            Assert.AreEqual(expectedLabel, label.GetComponent<TextMesh>().text);
+        }
+
         private static void AssertButtonVisible(string buttonName, bool expectedVisible, bool expectedInteractable)
         {
             Button button = FindButton(buttonName);
@@ -378,6 +556,20 @@ namespace AIFounder.Tests.PlayMode
                     Assert.IsTrue(panelRect.Contains(corner), $"Button '{button.name}' is outside the Repair Job panel bounds.");
                 }
             }
+        }
+
+        private static Rect GetWorldRect(RectTransform rectTransform)
+        {
+            var corners = new Vector3[4];
+            rectTransform.GetWorldCorners(corners);
+            return RectFromCorners(corners);
+        }
+
+        private static void AssertScrollContentDoesNotOverlapActionBar()
+        {
+            Rect contentRect = GetWorldRect(FindGameObject("Scrollable Content Area").GetComponent<RectTransform>());
+            Rect actionRect = GetWorldRect(FindGameObject("Fixed Action Bar").GetComponent<RectTransform>());
+            Assert.IsFalse(contentRect.Overlaps(actionRect));
         }
 
         private static Rect RectFromCorners(Vector3[] corners)

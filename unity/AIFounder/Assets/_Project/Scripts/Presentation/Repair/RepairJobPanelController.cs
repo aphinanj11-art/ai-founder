@@ -1,6 +1,7 @@
 using System.Text;
 using AIFounder.Application.Repair;
 using AIFounder.Domain.Repair;
+using AIFounder.Presentation;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,11 +9,18 @@ namespace AIFounder.Presentation.Repair
 {
     public sealed class RepairJobPanelController : MonoBehaviour
     {
+        private static readonly Color ActiveMethodColor = new Color(0.95f, 0.74f, 0.28f, 1f);
+        private static readonly Color NormalButtonColor = new Color(0.20f, 0.26f, 0.30f, 1f);
+        private static readonly Color DisabledButtonColor = new Color(0.24f, 0.24f, 0.24f, 0.76f);
+
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private Text titleText;
         [SerializeField] private Text bodyText;
         [SerializeField] private Text cashText;
         [SerializeField] private Text feedbackText;
+        [SerializeField] private Text objectiveText;
+        [SerializeField] private Text loopProgressText;
+        [SerializeField] private InteractionPromptHud promptHud;
         [SerializeField] private ScrollRect scrollRect;
         [SerializeField] private GameObject scrollContentRoot;
         [SerializeField] private GameObject actionBarRoot;
@@ -53,6 +61,8 @@ namespace AIFounder.Presentation.Repair
         public string VisibleBodyText => BuildVisibleBodyText();
         public string VisibleFeedbackText => feedbackText != null ? feedbackText.text : string.Empty;
         public string VisibleCashText => cashText != null ? cashText.text : string.Empty;
+        public string VisibleObjectiveText => objectiveText != null ? objectiveText.text : string.Empty;
+        public string VisibleProgressText => loopProgressText != null ? loopProgressText.text : string.Empty;
 
         private void Awake()
         {
@@ -69,6 +79,7 @@ namespace AIFounder.Presentation.Repair
                 panelRoot.SetActive(true);
             }
 
+            SetPromptSuppressed(true);
             Refresh("Workshop job panel opened.");
         }
 
@@ -79,6 +90,9 @@ namespace AIFounder.Presentation.Repair
             {
                 panelRoot.SetActive(false);
             }
+
+            SetPromptSuppressed(false);
+            RefreshObjectiveAndProgress();
         }
 
         public void AcceptCurrentJob()
@@ -159,6 +173,7 @@ namespace AIFounder.Presentation.Repair
                 feedbackText.text = feedback;
             }
 
+            RefreshObjectiveAndProgress();
             if (bodyText != null)
             {
                 bodyText.text = BuildBodyText();
@@ -274,8 +289,11 @@ namespace AIFounder.Presentation.Repair
             foreach (RepairMethodDefinition method in job.Definition.Methods)
             {
                 int cost = method.GetCost(session.UpgradeState, session.UpgradeDefinition);
-                builder.AppendLine($"{method.DisplayName}: Cost {cost}, Reliability {method.Reliability}");
+                bool selected = job.SelectedMethod != null && job.SelectedMethod.Id == method.Id;
+                builder.AppendLine($"{(selected ? "> " : string.Empty)}{method.DisplayName}");
+                builder.AppendLine($"Cost: {cost}  |  Reliability: {method.Reliability}");
                 builder.AppendLine(method.TradeOff);
+                builder.AppendLine();
             }
 
             return builder.ToString();
@@ -283,7 +301,7 @@ namespace AIFounder.Presentation.Repair
 
         private static string BuildOutcomeText(RepairOutcome outcome)
         {
-            return $"Outcome Breakdown\nMethod: {outcome.MethodName}\nRevenue: {outcome.Revenue}\nRepair Cost: {outcome.RepairCost}\nProfit: {outcome.Profit}\nCash: {outcome.CashBefore} -> {outcome.CashAfter}\n{outcome.Explanation}";
+            return $"Outcome Breakdown\nRevenue: {outcome.Revenue}\nRepair Cost: {outcome.RepairCost}\nProfit: {outcome.Profit}\nCash Before: {outcome.CashBefore}\nCash After: {outcome.CashAfter}\nMethod: {outcome.MethodName}\n{outcome.Explanation}";
         }
 
         private string BuildUpgradeText()
@@ -320,7 +338,7 @@ namespace AIFounder.Presentation.Repair
 
             SetActive(jobInfoSection, isAvailable || isAccepted || isMethodSelected || isRepaired);
             SetActive(repairMethodsSection, isAccepted || isMethodSelected);
-            SetActive(selectedMethodSection, isMethodSelected || isRepaired || isDelivered);
+            SetActive(selectedMethodSection, isAccepted || isMethodSelected || isRepaired);
             SetActive(deliverySection, isRepaired);
             SetActive(outcomeSection, isDelivered);
             SetActive(upgradeSection, isDelivered);
@@ -340,10 +358,150 @@ namespace AIFounder.Presentation.Repair
             SetVisibleAndInteractable(deliverButton, isRepaired, isRepaired);
             SetVisibleAndInteractable(purchaseUpgradeButton, isDelivered, canPurchaseUpgrade);
             SetVisibleAndInteractable(acceptNextJobButton, canAcceptNextJob, canAcceptNextJob);
+            RefreshMethodButtonLabels();
+            RefreshMethodButtonVisuals();
 
             if (scrollRect != null)
             {
                 scrollRect.verticalNormalizedPosition = 1f;
+            }
+        }
+
+        private void RefreshObjectiveAndProgress()
+        {
+            if (objectiveText != null)
+            {
+                objectiveText.text = $"Objective: {BuildObjectiveText()}";
+            }
+
+            if (loopProgressText != null)
+            {
+                loopProgressText.text = BuildProgressText();
+            }
+        }
+
+        private string BuildObjectiveText()
+        {
+            if (!isOpen)
+            {
+                return "Go to the Workshop";
+            }
+
+            RepairJobStatus status = session.CurrentJob.Status;
+            if (status == RepairJobStatus.Available)
+            {
+                return "Review the repair job";
+            }
+
+            if (status == RepairJobStatus.Accepted)
+            {
+                return "Select a repair method";
+            }
+
+            if (status == RepairJobStatus.MethodSelected)
+            {
+                return "Confirm the repair";
+            }
+
+            if (status == RepairJobStatus.Repaired)
+            {
+                return "Deliver the repaired pump";
+            }
+
+            if (status == RepairJobStatus.Delivered)
+            {
+                return session.UpgradeState.IsPurchased ? "Review the next job" : "Purchase the tool upgrade or continue";
+            }
+
+            return "Go to the Workshop";
+        }
+
+        private string BuildProgressText()
+        {
+            string currentStep = BuildCurrentProgressStep();
+            string[] steps = { "Job", "Repair", "Delivery", "Outcome", "Upgrade", "Next Job" };
+            var builder = new StringBuilder();
+            for (int i = 0; i < steps.Length; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append(" -> ");
+                }
+
+                builder.Append(steps[i] == currentStep ? $"[{steps[i]}]" : steps[i]);
+            }
+
+            return builder.ToString();
+        }
+
+        private string BuildCurrentProgressStep()
+        {
+            if (!isOpen || session.CurrentJob.Status == RepairJobStatus.Available)
+            {
+                return "Job";
+            }
+
+            if (session.CurrentJob.Status == RepairJobStatus.Accepted || session.CurrentJob.Status == RepairJobStatus.MethodSelected)
+            {
+                return "Repair";
+            }
+
+            if (session.CurrentJob.Status == RepairJobStatus.Repaired)
+            {
+                return "Delivery";
+            }
+
+            if (session.CurrentJob.Status == RepairJobStatus.Delivered && !session.UpgradeState.IsPurchased)
+            {
+                return "Upgrade";
+            }
+
+            if (session.CurrentJob.Status == RepairJobStatus.Delivered && session.UpgradeState.IsPurchased)
+            {
+                return "Next Job";
+            }
+
+            return "Job";
+        }
+
+        private void RefreshMethodButtonLabels()
+        {
+            SetMethodButtonLabel(quickPatchButton, "quick");
+            SetMethodButtonLabel(standardRepairButton, "standard");
+            SetMethodButtonLabel(reliableReplacementButton, "reliable");
+        }
+
+        private void SetMethodButtonLabel(Button button, string methodId)
+        {
+            RepairMethodDefinition method = session.CurrentJob.Definition.FindMethod(methodId);
+            Text label = button != null ? button.GetComponentInChildren<Text>(true) : null;
+            if (method == null || label == null)
+            {
+                return;
+            }
+
+            label.text = $"{method.DisplayName}\nCost {method.GetCost(session.UpgradeState, session.UpgradeDefinition)} | Rel {method.Reliability}";
+        }
+
+        private void RefreshMethodButtonVisuals()
+        {
+            string selectedId = session.CurrentJob.SelectedMethod != null ? session.CurrentJob.SelectedMethod.Id : string.Empty;
+            SetMethodButtonVisual(quickPatchButton, selectedId == "quick");
+            SetMethodButtonVisual(standardRepairButton, selectedId == "standard");
+            SetMethodButtonVisual(reliableReplacementButton, selectedId == "reliable");
+        }
+
+        private static void SetMethodButtonVisual(Button button, bool selected)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            Image image = button.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = selected ? ActiveMethodColor : (button.interactable ? NormalButtonColor : DisabledButtonColor);
             }
         }
 
@@ -353,6 +511,11 @@ namespace AIFounder.Presentation.Repair
             {
                 button.gameObject.SetActive(visible);
                 button.interactable = interactable;
+                Image image = button.GetComponent<Image>();
+                if (image != null)
+                {
+                    image.color = interactable ? NormalButtonColor : DisabledButtonColor;
+                }
             }
         }
 
@@ -375,6 +538,14 @@ namespace AIFounder.Presentation.Repair
             AddListener(deliverButton, DeliverFromDeliveryPoint);
             AddListener(purchaseUpgradeButton, PurchaseUpgrade);
             AddListener(acceptNextJobButton, AcceptNextJob);
+        }
+
+        private void SetPromptSuppressed(bool suppressed)
+        {
+            if (promptHud != null)
+            {
+                promptHud.SetSuppressed(suppressed);
+            }
         }
 
         private string BuildVisibleBodyText()

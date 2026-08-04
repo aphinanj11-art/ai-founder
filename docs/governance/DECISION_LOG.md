@@ -5,7 +5,7 @@
 **Project:** AI Founder: From Zero to Autonomous Empire  
 **Product Owner:** Bee  
 **Current Phase:** Pre-production — Documentation-first repository setup  
-**Last Updated:** 2026-08-03
+**Last Updated:** 2026-08-04
 
 ## Status Legend
 
@@ -121,3 +121,8 @@
 | DEC-099 | 2026-08-03 | Approved | Production and Quality Inspection remain excluded from Step 1.2 | Keeps this slice focused on proving Repair Job flow before adding other job archetypes. | Small Production and Quality Inspection require separate future authorization before implementation. | Bee |
 | DEC-100 | 2026-08-03 | Approved | Energy, Reputation, Inventory, Save, Instrumentation, and AI remain excluded from Step 1.2 | Prevents the first gameplay slice from becoming a broad MVP-A systems implementation. | Step 1.2 must not add energy/day systems, reputation, inventory, save/load, JSONL instrumentation, Generative AI, Ollama, employees, or factory automation. | Bee |
 | DEC-101 | 2026-08-03 | Approved | Step 1.2 commit and push authorized only after validation passes | Keeps repository publication tied to successful import, compilation, and test validation. | One local commit and push may be performed only for the approved Step 1.2 files if validation passes. | Bee |
+| DEC-102 | 2026-08-04 | Approved | Persistent objective guidance approved for MVP-A prototype | Manual playtest showed players need clearer current-step guidance while walking and using the Repair Job panel. | Adds presentation-only objective text driven by existing Repair Job state without creating quest logic or mutating gameplay state. | Bee |
+| DEC-103 | 2026-08-04 | Approved | Repair loop progress indicator approved | The core loop needs to be visible to players without external explanation. | Adds a text-based Job -> Repair -> Delivery -> Outcome -> Upgrade -> Next Job indicator using existing uGUI. | Bee |
+| DEC-104 | 2026-08-04 | Approved | Prototype location differentiation approved | Workshop, Nearby Shop, and Delivery Point were difficult to distinguish during manual playtest. | Allows primitive colors and readable labels for the three existing graybox locations only. | Bee |
+| DEC-105 | 2026-08-04 | Approved | State-focused Repair Job UI approved | The Repair Job panel must show only relevant information and actions for the current state. | Improves readability, section visibility, selected-method clarity, and prompt suppression without changing rules, economy values, or job flow. | Bee |
+| DEC-106 | 2026-08-04 | Approved | Gameplay rules and scope unchanged for Step 1.2B | Keeps clarity work separate from gameplay expansion. | No new job types, systems, packages, architecture, AI, economy formulas, or governing product document changes are authorized. | Bee |
