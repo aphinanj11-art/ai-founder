@@ -187,49 +187,62 @@ namespace AIFounder.Presentation.Repair
         {
             RepairJobState job = session.CurrentJob;
             var builder = new StringBuilder();
-            builder.AppendLine($"Job: {job.Definition.Title}");
-            builder.AppendLine($"Requirement: {job.Definition.Requirement}");
-            builder.AppendLine($"Reward: {job.Definition.Reward}");
-            builder.AppendLine($"Time Allowance: {job.Definition.TimeAllowance}");
             builder.AppendLine($"State: {job.Status}");
-            builder.AppendLine();
-            builder.AppendLine("Repair Methods:");
-            foreach (RepairMethodDefinition method in job.Definition.Methods)
+
+            if (job.Status == RepairJobStatus.Available)
             {
-                int cost = method.GetCost(session.UpgradeState, session.UpgradeDefinition);
-                builder.AppendLine($"- {method.DisplayName}: Cost {cost}, Reliability {method.Reliability}. {method.TradeOff}");
+                builder.AppendLine($"Job: {job.Definition.Title}");
+                builder.AppendLine($"Requirement: {job.Definition.Requirement}");
+                builder.AppendLine($"Reward: {job.Definition.Reward}");
+                builder.AppendLine($"Deadline: {job.Definition.TimeAllowance}");
+                return builder.ToString();
+            }
+
+            if (job.Status == RepairJobStatus.Accepted || job.Status == RepairJobStatus.MethodSelected)
+            {
+                builder.AppendLine($"Job: {job.Definition.Title}");
+                builder.AppendLine("Decision: choose a repair method.");
+                builder.AppendLine("Repair Methods:");
+                foreach (RepairMethodDefinition method in job.Definition.Methods)
+                {
+                    int cost = method.GetCost(session.UpgradeState, session.UpgradeDefinition);
+                    builder.AppendLine($"{method.DisplayName}: Cost {cost}, Reliability {method.Reliability}");
+                }
             }
 
             if (job.SelectedMethod != null)
             {
-                builder.AppendLine();
                 builder.AppendLine($"Selected Method: {job.SelectedMethod.DisplayName}");
+                builder.AppendLine($"Selected Cost: {job.SelectedMethod.GetCost(session.UpgradeState, session.UpgradeDefinition)}");
+            }
+
+            if (job.Status == RepairJobStatus.Repaired)
+            {
+                builder.AppendLine("Next Action: Deliver repaired work.");
             }
 
             if (job.Outcome != null)
             {
-                builder.AppendLine();
                 builder.AppendLine("Outcome Breakdown:");
-                builder.AppendLine($"Method: {job.Outcome.MethodName}");
                 builder.AppendLine($"Revenue: {job.Outcome.Revenue}");
                 builder.AppendLine($"Repair Cost: {job.Outcome.RepairCost}");
                 builder.AppendLine($"Profit: {job.Outcome.Profit}");
-                builder.AppendLine($"Cash: {job.Outcome.CashBefore} -> {job.Outcome.CashAfter}");
-                builder.AppendLine(job.Outcome.Explanation);
+                builder.AppendLine($"Cash Before: {job.Outcome.CashBefore}");
+                builder.AppendLine($"Cash After: {job.Outcome.CashAfter}");
             }
 
-            builder.AppendLine();
-            builder.AppendLine($"Upgrade: {session.UpgradeDefinition.Title} ({session.UpgradeDefinition.Cost})");
-            builder.AppendLine(session.UpgradeState.IsPurchased ? "Purchased: next job method costs are reduced." : session.UpgradeDefinition.EffectDescription);
+            if (job.Status == RepairJobStatus.Delivered)
+            {
+                builder.AppendLine(session.UpgradeState.IsPurchased ? "Upgrade: Purchased" : $"Upgrade: {session.UpgradeDefinition.Title} ({session.UpgradeDefinition.Cost})");
+                builder.AppendLine(session.UpgradeState.IsPurchased ? "Next job method costs are reduced." : session.UpgradeDefinition.EffectDescription);
+            }
 
             if (session.NextJobPreview != null)
             {
-                builder.AppendLine();
-                builder.AppendLine("Next Repair Job Available:");
-                builder.AppendLine(session.NextJobPreview.Definition.Title);
+                builder.AppendLine($"Next Repair Job Available: {session.NextJobPreview.Definition.Title}");
                 foreach (RepairMethodDefinition method in session.NextJobPreview.Definition.Methods)
                 {
-                    builder.AppendLine($"- {method.DisplayName}: Cost {method.GetCost(session.UpgradeState, session.UpgradeDefinition)}");
+                    builder.AppendLine($"{method.DisplayName}: Cost {method.GetCost(session.UpgradeState, session.UpgradeDefinition)}");
                 }
             }
 
@@ -279,19 +292,24 @@ namespace AIFounder.Presentation.Repair
 
         private string BuildJobInfoText(RepairJobState job)
         {
-            return $"Job Information\n{job.Definition.Title}\nRequirement: {job.Definition.Requirement}\nReward: {job.Definition.Reward}\nTime Allowance: {job.Definition.TimeAllowance}\nState: {job.Status}";
+            if (job.Status == RepairJobStatus.Repaired)
+            {
+                return $"Job\n{job.Definition.Title}";
+            }
+
+            return $"Job\n{job.Definition.Title}\nNeed: {job.Definition.Requirement}\nReward: {job.Definition.Reward}\nDeadline: {job.Definition.TimeAllowance}";
         }
 
         private string BuildRepairMethodsText(RepairJobState job)
         {
             var builder = new StringBuilder();
-            builder.AppendLine("Repair Methods");
+            builder.AppendLine("Choose Repair Method");
             foreach (RepairMethodDefinition method in job.Definition.Methods)
             {
                 int cost = method.GetCost(session.UpgradeState, session.UpgradeDefinition);
                 bool selected = job.SelectedMethod != null && job.SelectedMethod.Id == method.Id;
                 builder.AppendLine($"{(selected ? "> " : string.Empty)}{method.DisplayName}");
-                builder.AppendLine($"Cost: {cost}  |  Reliability: {method.Reliability}");
+                builder.AppendLine($"Cost {cost} | Reliability {method.Reliability}");
                 builder.AppendLine(method.TradeOff);
                 builder.AppendLine();
             }
@@ -301,14 +319,14 @@ namespace AIFounder.Presentation.Repair
 
         private static string BuildOutcomeText(RepairOutcome outcome)
         {
-            return $"Outcome Breakdown\nRevenue: {outcome.Revenue}\nRepair Cost: {outcome.RepairCost}\nProfit: {outcome.Profit}\nCash Before: {outcome.CashBefore}\nCash After: {outcome.CashAfter}\nMethod: {outcome.MethodName}\n{outcome.Explanation}";
+            return $"Outcome\nRevenue {outcome.Revenue}\n- Repair Cost {outcome.RepairCost}\n= Profit {outcome.Profit}\nCash Before: {outcome.CashBefore}\nCash After: {outcome.CashAfter}\nCash {outcome.CashBefore} -> {outcome.CashAfter}\n{outcome.Explanation}";
         }
 
         private string BuildUpgradeText()
         {
             return session.UpgradeState.IsPurchased
-                ? $"Upgrade\n{session.UpgradeDefinition.Title}: Purchased\nNext job method costs are reduced."
-                : $"Upgrade\n{session.UpgradeDefinition.Title}\nCost: {session.UpgradeDefinition.Cost}\n{session.UpgradeDefinition.EffectDescription}";
+                ? $"Upgrade\nPurchased\nNext-job repair costs reduced"
+                : $"Upgrade\n{session.UpgradeDefinition.Title}\nCost {session.UpgradeDefinition.Cost}\nEffect: Next Repair Job methods cost {session.UpgradeDefinition.MethodCostReduction} less";
         }
 
         private string BuildNextJobText()
@@ -317,6 +335,7 @@ namespace AIFounder.Presentation.Repair
             builder.AppendLine("Next Repair Job");
             builder.AppendLine(session.NextJobPreview.Definition.Title);
             builder.AppendLine($"Reward: {session.NextJobPreview.Definition.Reward}");
+            builder.AppendLine(session.UpgradeState.IsPurchased ? "Upgrade effect: repair costs reduced" : "Upgrade effect: not purchased");
             foreach (RepairMethodDefinition method in session.NextJobPreview.Definition.Methods)
             {
                 builder.AppendLine($"{method.DisplayName}: Cost {method.GetCost(session.UpgradeState, session.UpgradeDefinition)}");

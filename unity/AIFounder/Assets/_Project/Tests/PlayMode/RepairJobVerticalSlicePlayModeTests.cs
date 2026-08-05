@@ -223,11 +223,12 @@ namespace AIFounder.Tests.PlayMode
             ClickSceneButton("Deliver Button");
 
             string outcome = FindGameObject("Outcome Section Text").GetComponent<Text>().text;
-            Assert.That(outcome, Does.Contain("Revenue: 300"));
-            Assert.That(outcome, Does.Contain("Repair Cost: 80"));
-            Assert.That(outcome, Does.Contain("Profit: 220"));
+            Assert.That(outcome, Does.Contain("Revenue 300"));
+            Assert.That(outcome, Does.Contain("- Repair Cost 80"));
+            Assert.That(outcome, Does.Contain("= Profit 220"));
             Assert.That(outcome, Does.Contain("Cash Before: 500"));
             Assert.That(outcome, Does.Contain("Cash After: 720"));
+            Assert.That(outcome, Does.Contain("Cash 500 -> 720"));
         }
 
         [UnityTest]
@@ -286,6 +287,66 @@ namespace AIFounder.Tests.PlayMode
             ClickSceneButton("Deliver Button");
             AssertActiveButtonsInsidePanel();
             AssertScrollContentDoesNotOverlapActionBar();
+        }
+
+        [UnityTest]
+        public IEnumerator RepairPanelContentDoesNotClipOrOverlapAtFullHd()
+        {
+            yield return AssertRepairPanelLayoutAtResolution(1920, 1080);
+        }
+
+        [UnityTest]
+        public IEnumerator RepairPanelContentDoesNotClipOrOverlapAtSixteenHundredByNineHundred()
+        {
+            yield return AssertRepairPanelLayoutAtResolution(1600, 900);
+        }
+
+        [UnityTest]
+        public IEnumerator MethodCardsUseEqualDimensionsAndSelectedState()
+        {
+            Screen.SetResolution(1600, 900, false);
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+            yield return null;
+
+            FindInteractionPoint("Workshop").Interact();
+            ClickSceneButton("Accept Button");
+            Canvas.ForceUpdateCanvases();
+
+            Button quick = FindButton("Quick Patch Button");
+            Button standard = FindButton("Standard Repair Button");
+            Button reliable = FindButton("Reliable Replacement Button");
+            AssertEqualButtonSize(quick, standard);
+            AssertEqualButtonSize(standard, reliable);
+            Assert.That(quick.GetComponentInChildren<Text>().text, Does.Contain("Cost 80"));
+            Assert.That(standard.GetComponentInChildren<Text>().text, Does.Contain("Rel 75"));
+            Assert.That(reliable.GetComponentInChildren<Text>().text, Does.Contain("Reliable Replacement"));
+
+            Color before = standard.GetComponent<Image>().color;
+            ClickSceneButton("Standard Repair Button");
+            Color after = standard.GetComponent<Image>().color;
+            Assert.AreNotEqual(before, after);
+        }
+
+        [UnityTest]
+        public IEnumerator UpgradeTextShowsEffectBeforeAndAfterPurchase()
+        {
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+            var workshop = FindInteractionPoint("Workshop");
+            workshop.Interact();
+            ClickSceneButton("Accept Button");
+            ClickSceneButton("Standard Repair Button");
+            ClickSceneButton("Confirm Repair Button");
+            ClickSceneButton("Deliver Button");
+
+            string beforePurchase = FindGameObject("Upgrade Section Text").GetComponent<Text>().text;
+            Assert.That(beforePurchase, Does.Contain("Better Repair Tool"));
+            Assert.That(beforePurchase, Does.Contain("Cost 120"));
+            Assert.That(beforePurchase, Does.Contain("Effect: Next Repair Job methods cost 25 less"));
+
+            ClickSceneButton("Purchase Upgrade Button");
+            string afterPurchase = FindGameObject("Upgrade Section Text").GetComponent<Text>().text;
+            Assert.That(afterPurchase, Does.Contain("Purchased"));
+            Assert.That(afterPurchase, Does.Contain("Next-job repair costs reduced"));
         }
 
         [UnityTest]
@@ -562,6 +623,13 @@ namespace AIFounder.Tests.PlayMode
         {
             var corners = new Vector3[4];
             rectTransform.GetWorldCorners(corners);
+            Canvas canvas = rectTransform.GetComponentInParent<Canvas>();
+            Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+            for (int i = 0; i < corners.Length; i++)
+            {
+                corners[i] = RectTransformUtility.WorldToScreenPoint(camera, corners[i]);
+            }
+
             return RectFromCorners(corners);
         }
 
@@ -570,6 +638,117 @@ namespace AIFounder.Tests.PlayMode
             Rect contentRect = GetWorldRect(FindGameObject("Scrollable Content Area").GetComponent<RectTransform>());
             Rect actionRect = GetWorldRect(FindGameObject("Fixed Action Bar").GetComponent<RectTransform>());
             Assert.IsFalse(contentRect.Overlaps(actionRect));
+        }
+
+        private static IEnumerator AssertRepairPanelLayoutAtResolution(int width, int height)
+        {
+            Screen.SetResolution(width, height, false);
+            yield return SceneManager.LoadSceneAsync(FirstPlayableSceneName, LoadSceneMode.Single);
+            yield return null;
+
+            var workshop = FindInteractionPoint("Workshop");
+            workshop.Interact();
+            AssertRepairPanelLayoutBounds(width, height);
+
+            ClickSceneButton("Accept Button");
+            AssertRepairPanelLayoutBounds(width, height);
+            ClickSceneButton("Standard Repair Button");
+            AssertRepairPanelLayoutBounds(width, height);
+            ClickSceneButton("Confirm Repair Button");
+            AssertRepairPanelLayoutBounds(width, height);
+            ClickSceneButton("Deliver Button");
+            AssertRepairPanelLayoutBounds(width, height);
+            ClickSceneButton("Purchase Upgrade Button");
+            AssertRepairPanelLayoutBounds(width, height);
+        }
+
+        private static void AssertRepairPanelLayoutBounds(int width, int height)
+        {
+            const float panelOuterTolerance = 24f;
+            Canvas.ForceUpdateCanvases();
+            RectTransform panel = FindGameObject("Repair Job Panel Root").GetComponent<RectTransform>();
+            Rect panelRect = GetWorldRect(panel);
+            Assert.GreaterOrEqual(panelRect.xMin, -panelOuterTolerance);
+            Assert.GreaterOrEqual(panelRect.yMin, -panelOuterTolerance);
+            Assert.LessOrEqual(panelRect.xMax, width + panelOuterTolerance);
+            Assert.LessOrEqual(panelRect.yMax, height + panelOuterTolerance);
+            float widthRatio = panel.sizeDelta.x / width;
+            Assert.That(widthRatio, Is.InRange(0.55f, 0.70f), $"Panel width ratio {widthRatio:0.00} is outside compact prototype target.");
+
+            Rect objectiveRect = GetWorldRect(FindGameObject("Prototype Objective HUD").GetComponent<RectTransform>());
+            Assert.IsTrue(FindGameObject("Prototype Objective HUD").activeInHierarchy);
+            Assert.IsFalse(objectiveRect.Overlaps(panelRect), "Objective HUD overlaps the Repair Job panel.");
+
+            AssertActiveButtonsInsidePanel();
+            AssertScrollContentDoesNotOverlapActionBar();
+            AssertActiveSectionsDoNotOverlap();
+            AssertActiveTextIsInsidePanelAndNotClipped(panelRect);
+        }
+
+        private static void AssertActiveSectionsDoNotOverlap()
+        {
+            string[] names =
+            {
+                "Job Information Section",
+                "Repair Methods Section",
+                "Selected Method Section",
+                "Delivery Section",
+                "Outcome Section",
+                "Upgrade Section",
+                "Next Job Section"
+            };
+
+            for (int i = 0; i < names.Length; i++)
+            {
+                GameObject first = FindGameObject(names[i]);
+                if (first == null || !first.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                Rect firstRect = GetWorldRect(first.GetComponent<RectTransform>());
+                for (int j = i + 1; j < names.Length; j++)
+                {
+                    GameObject second = FindGameObject(names[j]);
+                    if (second == null || !second.activeInHierarchy)
+                    {
+                        continue;
+                    }
+
+                    Rect secondRect = GetWorldRect(second.GetComponent<RectTransform>());
+                    Assert.IsFalse(firstRect.Overlaps(secondRect), $"Sections '{names[i]}' and '{names[j]}' overlap.");
+                }
+            }
+        }
+
+        private static void AssertActiveTextIsInsidePanelAndNotClipped(Rect panelRect)
+        {
+            Transform panelTransform = FindGameObject("Repair Job Panel Root").transform;
+            foreach (Text text in Object.FindObjectsByType<Text>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (!text.gameObject.activeInHierarchy
+                    || text.name == "Interaction Prompt"
+                    || text.name == "Interaction Status Text"
+                    || !text.transform.IsChildOf(panelTransform)
+                    || text.transform.IsChildOf(FindGameObject("Fixed Action Bar").transform))
+                {
+                    continue;
+                }
+
+                RectTransform rectTransform = text.GetComponent<RectTransform>();
+                Rect textRect = GetWorldRect(rectTransform);
+                Assert.IsTrue(panelRect.Contains(new Vector2(textRect.xMin, textRect.yMin)), $"Text '{text.name}' is outside panel bounds.");
+                float preferredHeight = text.preferredHeight;
+                Assert.LessOrEqual(preferredHeight, rectTransform.rect.height + 2f, $"Text '{text.name}' preferred height clips its RectTransform.");
+            }
+        }
+
+        private static void AssertEqualButtonSize(Button first, Button second)
+        {
+            Rect firstRect = first.GetComponent<RectTransform>().rect;
+            Rect secondRect = second.GetComponent<RectTransform>().rect;
+            Assert.AreEqual(firstRect.width, secondRect.width, 0.5f);
+            Assert.AreEqual(firstRect.height, secondRect.height, 0.5f);
         }
 
         private static Rect RectFromCorners(Vector3[] corners)

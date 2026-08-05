@@ -5,7 +5,7 @@
 **Project:** AI Founder: From Zero to Autonomous Empire  
 **Product Owner:** Bee  
 **Current Phase:** Pre-production — Documentation-first repository setup  
-**Last Updated:** 2026-08-04
+**Last Updated:** 2026-08-05
 
 ## Status Legend
 
@@ -126,3 +126,8 @@
 | DEC-104 | 2026-08-04 | Approved | Prototype location differentiation approved | Workshop, Nearby Shop, and Delivery Point were difficult to distinguish during manual playtest. | Allows primitive colors and readable labels for the three existing graybox locations only. | Bee |
 | DEC-105 | 2026-08-04 | Approved | State-focused Repair Job UI approved | The Repair Job panel must show only relevant information and actions for the current state. | Improves readability, section visibility, selected-method clarity, and prompt suppression without changing rules, economy values, or job flow. | Bee |
 | DEC-106 | 2026-08-04 | Approved | Gameplay rules and scope unchanged for Step 1.2B | Keeps clarity work separate from gameplay expansion. | No new job types, systems, packages, architecture, AI, economy formulas, or governing product document changes are authorized. | Bee |
+| DEC-107 | 2026-08-05 | Approved | Final Repair Slice UX hardening approved | Latest Product Owner playtest found remaining clipping, overlap, density, and form-like readability issues in the Repair Job panel. | Allows final prototype readability hardening for the existing Repair Job slice only. | Bee |
+| DEC-108 | 2026-08-05 | Approved | Compact state-focused Repair panel approved | Players should understand the current decision within a few seconds without reading repeated full job details. | Repair Job UI may use a smaller panel, reduced text density, state-specific sections, and compact action visibility. | Bee |
+| DEC-109 | 2026-08-05 | Approved | Compact outcome equation approved | Revenue, repair cost, profit, and cash movement need to be immediately readable after delivery. | Outcome presentation may show Revenue, minus Repair Cost, equals Profit, and Cash Before/After without changing calculations. | Bee |
+| DEC-110 | 2026-08-05 | Approved | Repair values and gameplay rules unchanged for Step 1.2C | Keeps UX hardening separate from gameplay tuning or systems expansion. | Repair method values, rewards, upgrade cost/effect, state transitions, Domain logic, and Application logic must remain unchanged. | Bee |
+| DEC-111 | 2026-08-05 | Approved | Step 1.2C is the final planned Repair UI refinement before Product Owner acceptance | Prevents endless polishing of the Repair slice before broader MVP-A validation work resumes. | Further Repair UI changes should come from Product Owner acceptance review or new explicitly approved follow-up scope. | Bee |
